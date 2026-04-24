@@ -1,0 +1,179 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  EMPLOYEE
+  MANAGER
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CASUAL
+}
+
+enum PeriodType {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum ScheduleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(EMPLOYEE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  details   EmployeeDetails?
+  createdScheduleTemplates ScheduleTemplate[]
+}
+
+model EmployeeDetails {
+  id String @id @default(uuid())
+  userId String @unique
+  employmentType EmploymentType
+  hourlyWage Float?
+  desiredHoursPerWeek Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id])
+  employeeLocations EmployeeLocation[]
+  shiftAssignments ShiftAssignment[]
+  availabilities EmployeeAvailability[]
+}
+
+model EmployeeAvailability {
+  id String @id @default(uuid())
+  employeeId String
+  dayOfWeek Int
+  isAvailable Boolean
+  isPreferred Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  employee EmployeeDetails @relation(fields: [employeeId], references: [id])
+  @@unique([employeeId, dayOfWeek])
+}
+
+model Location {
+  id String @id @default(uuid())
+  name String
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  employeeLocations EmployeeLocation[]
+  shiftTemplates ShiftTemplate[]
+  shifts Shift[]
+}
+
+model EmployeeLocation {
+  id String @id @default(uuid())
+  employeeId String
+  locationId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  employee EmployeeDetails @relation(fields: [employeeId], references: [id])
+  location Location @relation(fields: [locationId], references: [id])
+  @@unique([employeeId, locationId])
+}
+
+model ScheduleTemplate {
+  id String @id @default(uuid())
+  name String
+  periodType PeriodType
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdByUser User @relation(fields: [createdBy], references: [id])
+  shiftTemplates ShiftTemplate[]
+  schedules Schedule[]
+}
+
+model ShiftTemplate {
+  id String @id @default(uuid())
+  scheduleTemplateId String
+  locationId String
+  name String
+  dayOfWeek Int
+  startTime Int
+  endTime Int
+  minEmployees Int
+  maxEmployees Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  scheduleTemplate ScheduleTemplate @relation(fields: [scheduleTemplateId], references: [id])
+  location Location @relation(fields: [locationId], references: [id])
+  servicePeriods ServicePeriod[]
+  shifts Shift[]
+}
+
+model ServicePeriod {
+  id String @id @default(uuid())
+  shiftTemplateId String
+  name String
+  startTime Int
+  endTime Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  shiftTemplate ShiftTemplate @relation(fields: [shiftTemplateId], references: [id])
+}
+
+model Schedule {
+  id String @id @default(uuid())
+  scheduleTemplateId String
+  startDate DateTime
+  endDate DateTime
+  status ScheduleStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  scheduleTemplate ScheduleTemplate @relation(fields: [scheduleTemplateId], references: [id])
+  shifts Shift[]
+}
+
+model Shift {
+  id String @id @default(uuid())
+  scheduleId String
+  shiftTemplateId String
+  locationId String
+  date DateTime
+  startTime Int
+  endTime Int
+  minEmployees Int
+  maxEmployees Int
+  status ScheduleStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  schedule Schedule @relation(fields: [scheduleId], references: [id])
+  shiftTemplate ShiftTemplate @relation(fields: [shiftTemplateId], references: [id])
+  location Location @relation(fields: [locationId], references: [id])
+  shiftAssignments ShiftAssignment[]
+}
+
+model ShiftAssignment {
+  id String @id @default(uuid())
+  shiftId String
+  employeeId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  shift Shift @relation(fields: [shiftId], references: [id])
+  employee EmployeeDetails @relation(fields: [employeeId], references: [id])
+  @@unique([shiftId, employeeId])
+}
