@@ -13,28 +13,35 @@ datasource db {
   provider = "postgresql"
 }
 
+// Enums
+// Define user roles
 enum Role {
   EMPLOYEE
   MANAGER
 }
 
+// Define types of employment
 enum EmploymentType {
   FULL_TIME
   PART_TIME
   CASUAL
 }
 
+// Define schedule period types
 enum PeriodType {
   WEEKLY
   BIWEEKLY
   MONTHLY
 }
 
+// Define schedule statuses
 enum ScheduleStatus {
   DRAFT
   PUBLISHED
 }
 
+// Models
+// User model
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -47,6 +54,7 @@ model User {
   createdScheduleTemplates ScheduleTemplate[]
 }
 
+// EmployeeDetails model to store additional information about employees
 model EmployeeDetails {
   id String @id @default(uuid())
   userId String @unique
@@ -61,6 +69,7 @@ model EmployeeDetails {
   availabilities EmployeeAvailability[]
 }
 
+// EmployeeAvailability model to store employee availability and preferences
 model EmployeeAvailability {
   id String @id @default(uuid())
   employeeId String
@@ -73,6 +82,7 @@ model EmployeeAvailability {
   @@unique([employeeId, dayOfWeek])
 }
 
+// Location model to represent different work locations
 model Location {
   id String @id @default(uuid())
   name String
@@ -84,6 +94,7 @@ model Location {
   shifts Shift[]
 }
 
+// Join table to represent the many-to-many relationship between employees and locations
 model EmployeeLocation {
   id String @id @default(uuid())
   employeeId String
@@ -95,6 +106,7 @@ model EmployeeLocation {
   @@unique([employeeId, locationId])
 }
 
+// ScheduleTemplate model to define templates for schedules, which can be reused for creating actual schedules
 model ScheduleTemplate {
   id String @id @default(uuid())
   name String
@@ -107,6 +119,7 @@ model ScheduleTemplate {
   schedules Schedule[]
 }
 
+// ShiftTemplate model to define templates for shifts, which can be reused for creating actual shifts
 model ShiftTemplate {
   id String @id @default(uuid())
   scheduleTemplateId String
@@ -125,6 +138,7 @@ model ShiftTemplate {
   shifts Shift[]
 }
 
+// ServicePeriod model to define specific time periods for shifts
 model ServicePeriod {
   id String @id @default(uuid())
   shiftTemplateId String
@@ -136,6 +150,7 @@ model ServicePeriod {
   shiftTemplate ShiftTemplate @relation(fields: [shiftTemplateId], references: [id])
 }
 
+// Schedule model to represent actual schedules created from templates
 model Schedule {
   id String @id @default(uuid())
   scheduleTemplateId String
@@ -148,6 +163,7 @@ model Schedule {
   shifts Shift[]
 }
 
+// Shift model to represent actual shifts created from templates and assigned to schedules
 model Shift {
   id String @id @default(uuid())
   scheduleId String
@@ -167,6 +183,7 @@ model Shift {
   shiftAssignments ShiftAssignment[]
 }
 
+// ShiftAssignment model to represent the assignment of employees to shifts
 model ShiftAssignment {
   id String @id @default(uuid())
   shiftId String
